@@ -1,0 +1,17 @@
+.gradle/
+.kotlin/
+build/
+tmp/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.iml
+.idea/
+
+app/build/
+android-sdk/
+app/signing/
+dist/

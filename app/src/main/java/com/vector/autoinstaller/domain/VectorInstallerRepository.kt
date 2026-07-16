@@ -1,0 +1,9 @@
+package com.vector.autoinstaller.domain
+
+interface VectorInstallerRepository {
+    suspend fun hasInternet(): Boolean
+    suspend fun hasRootAccess(): Boolean
+    suspend fun downloadModule(modulePackage: ModulePackage): Boolean
+    suspend fun installModule(modulePackage: ModulePackage): Boolean
+    suspend fun rebootDevice(): Boolean
+}
