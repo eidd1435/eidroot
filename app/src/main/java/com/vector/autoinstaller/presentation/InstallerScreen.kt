@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vector.autoinstaller.domain.InstallerConstants
+import com.vector.autoinstaller.domain.AppInstallerConstants
 
 @Composable
 fun InstallerScreen(viewModel: InstallerViewModel) {
@@ -73,11 +74,40 @@ fun InstallerScreen(viewModel: InstallerViewModel) {
             }
 
             Spacer(Modifier.height(20.dp))
-            Text("الإضافات", color = Color.White, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Button(
+                    onClick = { viewModel.onSectionChanged(InstallerSection.Modules) },
+                    enabled = !state.isRunning,
+                    modifier = Modifier.weight(1f)
+                ) { Text("إضافات Zygisk") }
+                OutlinedButton(
+                    onClick = { viewModel.onSectionChanged(InstallerSection.Apps) },
+                    enabled = !state.isRunning,
+                    modifier = Modifier.weight(1f)
+                ) { Text("التطبيقات") }
+            }
             Spacer(Modifier.height(8.dp))
 
-            InstallerConstants.Modules.forEach { module ->
-                val selected = module.displayName in state.selectedModules
+            val entries = if (state.section == InstallerSection.Modules)
+                InstallerConstants.Modules.map { it.displayName }
+            else
+                AppInstallerConstants.Apps.map { it.displayName }
+
+            Text(
+                if (state.section == InstallerSection.Modules) "إضافات Zygisk" else "تطبيقات الإدارة",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            )
+
+            entries.forEach { displayName ->
+                val selected = if (state.section == InstallerSection.Modules)
+                    displayName in state.selectedModules
+                else
+                    displayName in state.selectedApps
                 Card(
                     colors = CardDefaults.cardColors(containerColor = if (selected) Color(0xFF10243A) else Color(0xFF111827)),
                     shape = RoundedCornerShape(14.dp),
@@ -85,13 +115,18 @@ fun InstallerScreen(viewModel: InstallerViewModel) {
                 ) {
                     Row(Modifier.fillMaxWidth().padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text(module.displayName, color = Color.White, fontWeight = FontWeight.SemiBold)
+                            Text(displayName, color = Color.White, fontWeight = FontWeight.SemiBold)
                             Text(if (selected) "محدد للتثبيت" else "غير محدد", color = Color(0xFF94A3B8), style = MaterialTheme.typography.bodySmall)
                         }
                         Switch(
                             checked = selected,
                             enabled = !state.isRunning,
-                            onCheckedChange = { viewModel.onModuleSelectionChanged(module.displayName, it) }
+                            onCheckedChange = {
+                                if (state.section == InstallerSection.Modules)
+                                    viewModel.onModuleSelectionChanged(displayName, it)
+                                else
+                                    viewModel.onAppSelectionChanged(displayName, it)
+                            }
                         )
                     }
                 }
@@ -99,10 +134,20 @@ fun InstallerScreen(viewModel: InstallerViewModel) {
 
             Spacer(Modifier.height(18.dp))
             Button(
-                onClick = viewModel::onInstallClicked,
-                enabled = !state.isRunning && state.selectedModules.isNotEmpty(),
+                onClick = {
+                    if (state.section == InstallerSection.Modules) viewModel.onInstallClicked()
+                    else viewModel.onInstallAppsClicked()
+                },
+                enabled = !state.isRunning && if (state.section == InstallerSection.Modules)
+                    state.selectedModules.isNotEmpty() else state.selectedApps.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().height(56.dp)
-            ) { Text("تثبيت الإضافات المحددة", fontWeight = FontWeight.Bold) }
+            ) {
+                Text(
+                    if (state.section == InstallerSection.Modules) "تثبيت الإضافات المحددة"
+                    else "تنزيل وتثبيت التطبيقات المحددة",
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             if (state.isRunning) {
                 Spacer(Modifier.height(18.dp))

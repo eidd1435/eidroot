@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.vector.autoinstaller.data.VectorInstallerRepositoryImpl
 import com.vector.autoinstaller.domain.InstallVectorUseCase
+import com.vector.autoinstaller.domain.InstallAppsUseCase
 import com.vector.autoinstaller.domain.InstallerProgress
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,10 +15,17 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class InstallerViewModel(
-    private val installVector: InstallVectorUseCase
+    private val installVector: InstallVectorUseCase,
+    private val installApps: InstallAppsUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(InstallerUiState())
     val uiState: StateFlow<InstallerUiState> = _uiState.asStateFlow()
+
+    fun onSectionChanged(section: InstallerSection) {
+        if (!_uiState.value.isRunning) {
+            _uiState.value = _uiState.value.copy(section = section, messageText = "", statusText = "")
+        }
+    }
 
     fun onCheckRootClicked() {
         if (_uiState.value.isRunning) return
@@ -38,15 +46,38 @@ class InstallerViewModel(
         _uiState.value = _uiState.value.copy(selectedModules = modules, messageText = "")
     }
 
+    fun onAppSelectionChanged(appName: String, selected: Boolean) {
+        if (_uiState.value.isRunning) return
+        val apps = _uiState.value.selectedApps.toMutableSet()
+        if (selected) apps += appName else apps -= appName
+        _uiState.value = _uiState.value.copy(selectedApps = apps, messageText = "")
+    }
+
     fun onInstallClicked() {
         if (_uiState.value.isRunning || _uiState.value.selectedModules.isEmpty()) return
 
+        _uiState.value = _uiState.value.copy(operation = InstallerOperation.Modules)
         viewModelScope.launch {
             installVector(_uiState.value.selectedModules)
                 .catch {
                     _uiState.value = _uiState.value.copy(
                         isRunning = false,
                         messageText = "Installation failed."
+                    )
+                }
+                .collect(::handleProgress)
+        }
+    }
+
+    fun onInstallAppsClicked() {
+        if (_uiState.value.isRunning || _uiState.value.selectedApps.isEmpty()) return
+        _uiState.value = _uiState.value.copy(operation = InstallerOperation.Apps)
+        viewModelScope.launch {
+            installApps(_uiState.value.selectedApps)
+                .catch {
+                    _uiState.value = _uiState.value.copy(
+                        isRunning = false,
+                        messageText = "تعذر تثبيت التطبيقات."
                     )
                 }
                 .collect(::handleProgress)
@@ -86,8 +117,12 @@ class InstallerViewModel(
             )
 
             InstallerProgress.Success -> current.copy(
-                isRunning = true,
-                messageText = "تم تثبيت الإضافات المحددة بنجاح.\nسيُعاد تشغيل الجهاز الآن."
+                isRunning = current.operation == InstallerOperation.Modules,
+                statusText = "",
+                messageText = if (current.operation == InstallerOperation.Modules)
+                    "تم تثبيت الإضافات المحددة بنجاح.\nسيُعاد تشغيل الجهاز الآن."
+                else
+                    "تم تثبيت التطبيقات المحددة بنجاح."
             )
 
             InstallerProgress.Rebooting -> current.copy(
@@ -111,7 +146,10 @@ class InstallerViewModel(
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val repository = VectorInstallerRepositoryImpl(context.applicationContext)
-            return InstallerViewModel(InstallVectorUseCase(repository)) as T
+            return InstallerViewModel(
+                InstallVectorUseCase(repository),
+                InstallAppsUseCase(repository)
+            ) as T
         }
     }
 }
