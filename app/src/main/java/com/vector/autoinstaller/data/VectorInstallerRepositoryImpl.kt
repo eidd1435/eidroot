@@ -2,6 +2,7 @@ package com.vector.autoinstaller.data
 
 import android.content.Context
 import com.vector.autoinstaller.domain.ModulePackage
+import com.vector.autoinstaller.domain.AppPackage
 import com.vector.autoinstaller.domain.VectorInstallerRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -33,6 +34,18 @@ class VectorInstallerRepositoryImpl(
 
     override suspend fun installModule(modulePackage: ModulePackage): Boolean =
         rootShell.installMagiskModule(modulePackage.installPath)
+
+    override suspend fun downloadApp(appPackage: AppPackage): Boolean =
+        rootShell.deleteFile(appPackage.publicDownloadPath) &&
+            rootShell.deleteFile(appPackage.publicApkPath) &&
+            rootShell.deleteFile(appPackage.installPath) &&
+            downloader.downloadApp(appPackage) &&
+            rootShell.fileExists(appPackage.publicApkPath) &&
+            rootShell.copyFile(appPackage.publicApkPath, appPackage.installPath) &&
+            rootShell.fileExists(appPackage.installPath)
+
+    override suspend fun installApp(appPackage: AppPackage): Boolean =
+        rootShell.installApk(appPackage.installPath)
 
     override suspend fun rebootDevice(): Boolean =
         rootShell.reboot()

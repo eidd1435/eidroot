@@ -33,6 +33,12 @@ class RootShell {
         return false
     }
 
+    suspend fun installApk(apkPath: String): Boolean {
+        val result = runAsRoot("pm install -r ${apkPath.shellEscape()}", timeoutSeconds = 180)
+        Log.i(Tag, "APK install exit=${result.exitCode}\n${result.output}")
+        return result.exitCode == 0 && result.output.contains("Success", ignoreCase = true)
+    }
+
     suspend fun deleteFile(path: String): Boolean {
         val command = "rm -f ${path.shellEscape()}"
         val result = runAsRoot(command, timeoutSeconds = 20)
