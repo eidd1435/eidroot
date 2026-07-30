@@ -36,16 +36,10 @@ class VectorInstallerRepositoryImpl(
         rootShell.installMagiskModule(modulePackage.installPath)
 
     override suspend fun downloadApp(appPackage: AppPackage): Boolean =
-        rootShell.deleteFile(appPackage.publicDownloadPath) &&
-            rootShell.deleteFile(appPackage.publicApkPath) &&
-            rootShell.deleteFile(appPackage.installPath) &&
-            downloader.downloadApp(appPackage) &&
-            rootShell.fileExists(appPackage.publicApkPath) &&
-            rootShell.copyFile(appPackage.publicApkPath, appPackage.installPath) &&
-            rootShell.fileExists(appPackage.installPath)
+        downloader.downloadApp(appPackage)
 
     override suspend fun installApp(appPackage: AppPackage): Boolean =
-        rootShell.installApk(appPackage.installPath)
+        true
 
     override suspend fun rebootDevice(): Boolean =
         rootShell.reboot()

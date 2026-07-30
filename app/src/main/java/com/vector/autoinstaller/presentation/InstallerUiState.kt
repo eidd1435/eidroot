@@ -6,7 +6,7 @@ data class InstallerUiState(
     val messageText: String = "",
     val rootStatus: RootUiStatus = RootUiStatus.Unknown,
     val selectedModules: Set<String> = com.vector.autoinstaller.domain.InstallerConstants.Modules.map { it.displayName }.toSet(),
-    val selectedApps: Set<String> = com.vector.autoinstaller.domain.AppInstallerConstants.Apps.map { it.displayName }.toSet(),
+    val selectedApps: Set<String> = emptySet(),
     val section: InstallerSection = InstallerSection.Modules,
     val operation: InstallerOperation = InstallerOperation.Modules
 )

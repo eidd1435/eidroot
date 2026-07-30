@@ -13,22 +13,10 @@ class InstallAppsUseCase(
             return@flow
         }
 
-        emit(InstallerProgress.CheckingRoot)
-        if (!repository.hasRootAccess()) {
-            emit(InstallerProgress.Error(InstallerError.RootNotGranted))
-            return@flow
-        }
-        emit(InstallerProgress.RootGranted)
-
         AppInstallerConstants.Apps.filter { it.displayName in selectedApps }.forEach { app ->
             emit(InstallerProgress.Downloading(app.displayName))
             if (!repository.downloadApp(app)) {
                 emit(InstallerProgress.Error(InstallerError.DownloadFailed))
-                return@flow
-            }
-            emit(InstallerProgress.Installing(app.displayName))
-            if (!repository.installApp(app)) {
-                emit(InstallerProgress.Error(InstallerError.InstallationFailed))
                 return@flow
             }
         }

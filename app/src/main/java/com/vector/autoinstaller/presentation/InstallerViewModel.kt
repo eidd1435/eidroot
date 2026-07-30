@@ -48,8 +48,7 @@ class InstallerViewModel(
 
     fun onAppSelectionChanged(appName: String, selected: Boolean) {
         if (_uiState.value.isRunning) return
-        val apps = _uiState.value.selectedApps.toMutableSet()
-        if (selected) apps += appName else apps -= appName
+        val apps = if (selected) mutableSetOf(appName) else mutableSetOf()
         _uiState.value = _uiState.value.copy(selectedApps = apps, messageText = "")
     }
 
@@ -122,7 +121,7 @@ class InstallerViewModel(
                 messageText = if (current.operation == InstallerOperation.Modules)
                     "تم تثبيت الإضافات المحددة بنجاح.\nسيُعاد تشغيل الجهاز الآن."
                 else
-                    "تم تثبيت التطبيقات المحددة بنجاح."
+                    "تم فتح صفحة التنزيل أو شاشة تثبيت التطبيق."
             )
 
             InstallerProgress.Rebooting -> current.copy(

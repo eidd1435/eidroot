@@ -8,7 +8,8 @@ data class AppPackage(
     val excludedAssetText: String? = null,
     val downloadFileName: String,
     val apkFileName: String,
-    val archiveApkEntry: String? = null
+    val archiveApkEntry: String? = null,
+    val browserPageUrl: String? = null
 ) {
     val publicDownloadPath = "/sdcard/Download/$downloadFileName"
     val publicApkPath = "/sdcard/Download/$apkFileName"
