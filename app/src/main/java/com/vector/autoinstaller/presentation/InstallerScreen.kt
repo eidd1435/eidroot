@@ -51,7 +51,7 @@ fun InstallerScreen(viewModel: InstallerViewModel) {
             Text("تثبيت إضافات Zygisk بسهولة وأمان", color = Color(0xFF94A3B8), textAlign = TextAlign.Center)
             Spacer(Modifier.height(22.dp))
 
-            Card(
+            if (state.section == InstallerSection.Modules) Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF111827)),
                 shape = RoundedCornerShape(18.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -70,6 +70,20 @@ fun InstallerScreen(viewModel: InstallerViewModel) {
                         enabled = !state.isRunning,
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("فحص وطلب صلاحية الروت") }
+                }
+            } else Card(
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F2A24)),
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(18.dp)) {
+                    Text("تثبيت بدون روت", color = Color(0xFF34D399), fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "يتم تنزيل التطبيق ثم فتح مثبت أندرويد العادي للموافقة.",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
 

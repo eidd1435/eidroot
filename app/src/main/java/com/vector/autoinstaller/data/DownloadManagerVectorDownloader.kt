@@ -5,6 +5,8 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
+import android.content.Intent
+import androidx.core.content.FileProvider
 import com.vector.autoinstaller.domain.ModulePackage
 import com.vector.autoinstaller.domain.AppPackage
 import kotlinx.coroutines.Dispatchers
@@ -49,16 +51,18 @@ class DownloadManagerVectorDownloader(
     }
 
     suspend fun downloadApp(appPackage: AppPackage): Boolean = withContext(Dispatchers.IO) {
+        appPackage.browserPageUrl?.let { pageUrl ->
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(pageUrl))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            appContext.startActivity(intent)
+            return@withContext true
+        }
+
         val downloadFile = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
             appPackage.downloadFileName
         )
-        val apkFile = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            appPackage.apkFileName
-        )
         runCatching { downloadFile.delete() }
-        if (downloadFile != apkFile) runCatching { apkFile.delete() }
 
         val request = DownloadManager.Request(Uri.parse(resolveLatestAppUrl(appPackage)))
             .setTitle(appPackage.displayName)
@@ -71,10 +75,36 @@ class DownloadManagerVectorDownloader(
                 appPackage.downloadFileName
             )
 
-        if (!waitForDownload(downloadManager.enqueue(request))) return@withContext false
-        val archiveEntry = appPackage.archiveApkEntry ?: return@withContext downloadFile.isFile
-        extractApk(downloadFile, apkFile, archiveEntry)
+        val downloadId = downloadManager.enqueue(request)
+        if (!waitForDownload(downloadId)) return@withContext false
+        val archiveEntry = appPackage.archiveApkEntry
+        if (archiveEntry == null) {
+            val apkUri = downloadManager.getUriForDownloadedFile(downloadId)
+                ?: return@withContext false
+            return@withContext launchPackageInstaller(apkUri)
+        }
+        val privateApkFile = extractedApkFile(appPackage)
+        runCatching { privateApkFile.delete() }
+        if (!extractApk(downloadId, privateApkFile, archiveEntry)) return@withContext false
+        val apkUri = FileProvider.getUriForFile(
+            appContext,
+            "${appContext.packageName}.files",
+            privateApkFile
+        )
+        launchPackageInstaller(apkUri)
     }
+
+    private fun extractedApkFile(appPackage: AppPackage): File =
+        File(appContext.cacheDir, appPackage.apkFileName)
+
+    private fun launchPackageInstaller(apkUri: Uri): Boolean = runCatching {
+        val intent = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(apkUri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        appContext.startActivity(intent)
+        true
+    }.getOrDefault(false)
 
     private fun resolveLatestReleaseUrl(modulePackage: ModulePackage): String = runCatching {
         val apiUrl = URL("https://api.github.com/repos/${modulePackage.githubRepository}/releases/latest")
@@ -126,10 +156,11 @@ class DownloadManagerVectorDownloader(
         }
     }.getOrDefault(appPackage.fallbackUrl)
 
-    private fun extractApk(zipFile: File, outputFile: File, entryName: String): Boolean {
+    private fun extractApk(downloadId: Long, outputFile: File, entryName: String): Boolean {
         return try {
             var extracted = false
-            ZipInputStream(FileInputStream(zipFile)).use { zip ->
+            downloadManager.openDownloadedFile(downloadId).use { descriptor ->
+                ZipInputStream(FileInputStream(descriptor.fileDescriptor)).use { zip ->
                 while (!extracted) {
                     val entry = zip.nextEntry ?: break
                     if (!entry.isDirectory && entry.name.substringAfterLast('/') == entryName) {
@@ -137,6 +168,7 @@ class DownloadManagerVectorDownloader(
                         extracted = outputFile.isFile && outputFile.length() > 0
                     }
                     zip.closeEntry()
+                }
                 }
             }
             extracted

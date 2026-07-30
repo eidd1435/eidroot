@@ -13,13 +13,12 @@ object AppInstallerConstants {
         ),
         AppPackage(
             displayName = "LSPosed Manager",
-            fallbackUrl = "https://github.com/LSPosed/LSPosed/releases/download/v1.9.2/LSPosed-v1.9.2-7024-zygisk-release.zip",
+            fallbackUrl = "https://apkpure.com/ar/lsposed/org.lsposed.manager",
             githubRepository = "LSPosed/LSPosed",
-            assetNameContains = "zygisk-release.zip",
-            excludedAssetText = "riru",
-            downloadFileName = "LSPosed-Zygisk.zip",
+            assetNameContains = "LSPosed",
+            downloadFileName = "LSPosed.apk",
             apkFileName = "LSPosed-Manager.apk",
-            archiveApkEntry = "manager.apk"
+            browserPageUrl = "https://apkpure.com/ar/lsposed/org.lsposed.manager"
         ),
         AppPackage(
             displayName = "GpsSetter",
