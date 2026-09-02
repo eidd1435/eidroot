@@ -12,7 +12,7 @@
 - اختيار الإضافات المطلوب تثبيتها.
 - تنزيل أحدث إصدار Release تلقائيًا من GitHub.
 - دعم ReZygisk وVector وNoHello وHMA-OSS Zygisk.
-- قسم مستقل لتنزيل وتثبيت KernelSU Manager وLSPosed Manager وGpsSetter وMagisk وHMA-OSS Manager.
+- قسم مستقل لتنزيل وتثبيت KernelSU Manager وGpsSetter وMagisk وHMA-OSS Manager.
 - تنزيل التطبيقات وفتح مثبت أندرويد العادي بدون صلاحيات الروت.
 - واجهة عربية مع عرض حالة التنزيل والتثبيت.
 

@@ -12,15 +12,6 @@ object AppInstallerConstants {
             apkFileName = "KernelSU.apk"
         ),
         AppPackage(
-            displayName = "LSPosed Manager",
-            fallbackUrl = "https://apkpure.com/ar/lsposed/org.lsposed.manager",
-            githubRepository = "LSPosed/LSPosed",
-            assetNameContains = "LSPosed",
-            downloadFileName = "LSPosed.apk",
-            apkFileName = "LSPosed-Manager.apk",
-            browserPageUrl = "https://apkpure.com/ar/lsposed/org.lsposed.manager"
-        ),
-        AppPackage(
             displayName = "GpsSetter",
             fallbackUrl = "https://github.com/Android1500/GpsSetter/releases/download/v1.2.10/app-release.apk",
             githubRepository = "Android1500/GpsSetter",
